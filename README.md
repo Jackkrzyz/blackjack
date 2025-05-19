@@ -1,4 +1,4 @@
-# Blackjack
+# Blackjack (not done)
 
 > Run the .exe file in the builds or build your own executable
 
