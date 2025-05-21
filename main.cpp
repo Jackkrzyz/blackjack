@@ -1,7 +1,7 @@
 #include <iostream>
 #include <raylib.h>
 #include <algorithm> 
-using namespace std;
+#include <random>
 
 class Card {
     public:
@@ -63,7 +63,9 @@ class Deck {
             }
         }
         void shuffle() {
-            std::random_shuffle(cards, cards + 52);
+            std::random_device rd;
+            std::default_random_engine rng(rd());
+            std::shuffle(cards, cards + 52, rng);
         }
         
 };
