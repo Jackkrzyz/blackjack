@@ -17,7 +17,7 @@ class Card {
         }
         void draw() {
             if (faceUp) {
-                DrawRectangle(x, y, 50, 100, WHITE);
+                DrawRectangle(x, y, 75, 100, WHITE);
                 if (suit == 1) {
                     DrawText("♥", x + 10, y + 10, 20, RED);
                 } else if (suit == 2) {
@@ -42,8 +42,10 @@ class Card {
                     DrawText(TextFormat("%i", value), x + 10, y + 20, 20, BLACK);
                 }
             } else {
-                DrawRectangle(x, y, 50, 100, DARKGRAY);
+                DrawRectangle(x, y, 75, 100, DARKGRAY);
+                
             }
+            DrawRectangleLines(x, y, 75, 100, BLACK);
         }
 
 };
@@ -116,7 +118,7 @@ int main () {
     Player player;
     Player dealer;
     Deck deck;
-    Card* cardsInPlay[22];
+    int cardsDealt = 0;
     deck.shuffle();
     
 
@@ -127,7 +129,27 @@ int main () {
         
 
         if (!betting) {
-            int i = 1;
+            // Initial Cards
+            if (cardsDealt == 0) {
+                player.addCard(deck.cards[cardsDealt]);
+                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 - 80;
+                deck.cards[cardsDealt]->y=300;
+                cardsDealt++;
+
+                player.addCard(deck.cards[cardsDealt]);
+                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 + 5;
+                deck.cards[cardsDealt]->y=300;
+                cardsDealt++;
+
+                dealer.addCard(deck.cards[cardsDealt]);
+                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 - 80;
+                deck.cards[cardsDealt]->y=100;
+                cardsDealt++;
+            }
+
+            if (cardsDealt == 3) {
+                DrawText("Space - HIT\nBackspace - STAND", 25, SCREEN_HEIGHT / 2, 20, WHITE);
+            }
         } else {
             if (IsKeyPressed(KEY_DOWN)) {
                     bet -= betIncrement;
@@ -142,11 +164,16 @@ int main () {
                 balance -= bet;
             }
         }
-        DrawText(TextFormat("Balance: %i", balance), 0, 0, 20, WHITE);
-        DrawText(TextFormat("Bet: %i", bet), 0, 20, 20, WHITE);
-        
-        
 
+
+        DrawText(TextFormat("Bet: %i", bet), 0, SCREEN_HEIGHT - 40, 20, WHITE);
+        DrawText(TextFormat("Balance: %i", balance), 0, SCREEN_HEIGHT - 20, 20, WHITE);
+        DrawText(TextFormat("Score: %i", player.score),  SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, 20, WHITE);
+        
+        
+        for (int i = 0; i < 52; i++) {
+            deck.cards[i]->draw();
+        }
 
         
 
