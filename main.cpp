@@ -3,10 +3,13 @@
 #include <algorithm> 
 #include <random>
 
+
+Color colors[2] = {RED, BLACK};
+
 class Card {
     public:
         int value; // A = 1, 2 = 2..., 11 = J, 12 = Q, 13 = K
-        int suit; // 1 = Hearts, 2= diamonds, 3 = clubs, 4 = spades
+        int suit; // 1 = Hearts, 2 = diamonds, 3 = clubs, 4 = spades
         int x;
         int y;
         bool faceUp;
@@ -17,29 +20,37 @@ class Card {
         }
         void draw() {
             if (faceUp) {
+                int color = 1;
                 DrawRectangle(x, y, 75, 100, WHITE);
                 if (suit == 1) {
                     DrawText("♥", x + 10, y + 10, 20, RED);
+                    color = 0;
                 } else if (suit == 2) {
                     DrawText("♦", x + 10, y + 10, 20, RED);
+                    color = 0;
                 } else if (suit == 3) {
                     DrawText("♣", x + 10, y + 10, 20, BLACK);
                 } else if (suit == 4) {
                     DrawText("♠", x + 10, y + 10, 20, BLACK);
                 }
+                
                 if (value == 13) {
-                    DrawText("K", x + 10, y + 20, 20, BLACK);
+                    DrawText("K", x + 45, y + 10, 20, colors[color]);
                 }
                 else if(value == 12)
                 {
-                    DrawText("Q", x + 10, y + 20, 20, BLACK);
+                    DrawText("Q", x + 45, y + 10, 20, colors[color]);
                 }
                 else if(value == 11)
                 {
-                    DrawText("J", x + 10, y + 20, 20, BLACK);
+                    DrawText("J", x + 45, y + 10, 20, colors[color]);
+                }
+                else if(value == 1)
+                {
+                    DrawText("A", x + 45, y + 10, 20, colors[color]);
                 }
                 else {
-                    DrawText(TextFormat("%i", value), x + 10, y + 20, 20, BLACK);
+                    DrawText(TextFormat("%i", value), x + 45, y + 10, 20, colors[color]);
                 }
             } else {
                 DrawRectangle(x, y, 75, 100, DARKGRAY);
