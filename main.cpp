@@ -68,7 +68,7 @@ class Deck {
             int index = 0;
             for (int i = 1; i <= 4; i++) { // suit
                 for (int j = 1; j <= 13; j++) { // value
-                    cards[index] = new Card(j, i, true);
+                    cards[index] = new Card(j, i, false);
                     index++;
                 }
             }
@@ -87,7 +87,7 @@ class Player {
         int score = 0;
         int cardsReceived = 0;
         bool bust = false;
-        void addCard(Card* c) {
+        void addCard(Card* c, int x, int y) {
             hand[cardsReceived] = c;
 
             if (c->value == 1) {
@@ -107,6 +107,9 @@ class Player {
                 bust = true;
             }
             cardsReceived++;
+            c->x=x;
+            c->y=y;
+            c->faceUp = true;
         }
 };
 
@@ -144,19 +147,13 @@ int main () {
         if (!betting) {
             // Initial Cards
             if (cardsDealt == 0) {
-                player.addCard(deck.cards[cardsDealt]);
-                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 - 80;
-                deck.cards[cardsDealt]->y=300;
+                player.addCard(deck.cards[cardsDealt], SCREEN_WIDTH / 2 - 80, 300);
                 cardsDealt++;
 
-                player.addCard(deck.cards[cardsDealt]);
-                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 + 5;
-                deck.cards[cardsDealt]->y=300;
+                player.addCard(deck.cards[cardsDealt], SCREEN_WIDTH / 2 + 5, 300);
                 cardsDealt++;
 
-                dealer.addCard(deck.cards[cardsDealt]);
-                deck.cards[cardsDealt]->x=SCREEN_WIDTH / 2 - 80;
-                deck.cards[cardsDealt]->y=100;
+                dealer.addCard(deck.cards[cardsDealt], SCREEN_WIDTH / 2 - 80, 100);
                 cardsDealt++;
             }
 
