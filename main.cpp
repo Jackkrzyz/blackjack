@@ -1,6 +1,8 @@
 #include <iostream>
 #include <raylib.h>
-#include <algorithm> 
+#include <algorithm>
+#include <vector>
+
 using namespace std;
 
 class Card {
@@ -17,15 +19,16 @@ class Card {
         }
         void draw() {
             if (faceUp) {
-                DrawRectangle(x, y, 50, 100, WHITE);
+                DrawRectangle(x, y, 70, 100, WHITE);
+                DrawRectangleLines(x, y, 70, 100, BLACK);
                 if (suit == 1) {
-                    DrawText("♥", x + 10, y + 10, 20, RED);
+                    DrawText("Hearts", x + 10, y + 10, 5, RED);
                 } else if (suit == 2) {
-                    DrawText("♦", x + 10, y + 10, 20, RED);
+                    DrawText("Diamonds", x + 10, y + 10, 5, RED);
                 } else if (suit == 3) {
-                    DrawText("♣", x + 10, y + 10, 20, BLACK);
+                    DrawText("Clubs", x + 10, y + 10, 5, BLACK);
                 } else if (suit == 4) {
-                    DrawText("♠", x + 10, y + 10, 20, BLACK);
+                    DrawText("Spades", x + 10, y + 10, 5, BLACK);
                 }
                 if (value == 13) {
                     DrawText("K", x + 10, y + 20, 20, BLACK);
@@ -42,7 +45,8 @@ class Card {
                     DrawText(TextFormat("%i", value), x + 10, y + 20, 20, BLACK);
                 }
             } else {
-                DrawRectangle(x, y, 50, 100, DARKGRAY);
+                DrawRectangle(x, y, 70, 100, DARKGRAY);
+                DrawRectangleLines(x, y, 70, 100, BLACK);
             }
         }
 
@@ -129,7 +133,33 @@ class Player {
 };
 
 
+std::vector<int> interpolatePosition(int currentX, int currentY, int targetX, int targetY, int increment) {
+    std::vector<int> newPosition;
+    if(targetX > currentX)
+    {
+        newPosition.push_back(currentX += increment);
+    }
+    else if(targetX < currentX)
+    {
+        newPosition.push_back(currentX -= increment);
+    }
+    else {
+        newPosition.push_back(currentX);
+    }
 
+    if(targetY > currentY)
+    {
+        newPosition.push_back(currentY += increment);
+    }
+    else if(targetY < currentY)
+    {
+        newPosition.push_back(currentY -= increment);
+    }
+    else {
+        newPosition.push_back(currentY);
+    }
+    return newPosition;
+}
 
 int main () {
     
@@ -140,7 +170,15 @@ int main () {
     int betIncrement = 10;
     int balance = 2000;
     int bet = 15;
-    bool betting = true;
+    int gameState = 0;
+    bool bust = false;
+    bool blackjack = false;
+    // 0 = betting
+    // 1 = add cards
+    // 2 = deal
+    // 3 = player's turn
+    int animationState = 0;
+    bool allowDrawCards = false;
     
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Blackjack");
@@ -149,7 +187,8 @@ int main () {
     Player player;
     Player dealer;
     Deck deck;
-    Card* cardsInPlay[22];
+    Card* cardsToDraw[22];
+    int cardsInPlay;
     deck.shuffle();
     
 
@@ -159,9 +198,8 @@ int main () {
         ClearBackground(DARKGREEN);
         
 
-        if (!betting) {
-            int i = 1;
-        } else {
+        if (gameState == 0) {
+            DrawText("Place Bet", 125, 125, 50, WHITE);
             if (IsKeyPressed(KEY_DOWN)) {
                     bet -= betIncrement;
                     if (bet < minimumBet) {bet = minimumBet; }
@@ -171,21 +209,114 @@ int main () {
                     if (bet > balance) {bet = balance; }
             }
             if (IsKeyPressed(KEY_SPACE)) {
-                betting = false;
+                gameState = 1;
                 balance -= bet;
             }
+            
+
+        } else if (gameState == 1) {
+            player.addCard(deck.cards[0]);
+            dealer.addCard(deck.cards[1]);
+            player.addCard(deck.cards[2]);
+            dealer.addCard(deck.cards[3]);
+            for (int i = 0; i < 4; i++)
+            {
+                cardsToDraw[i] = deck.cards[i];
+                cardsToDraw[i]->x = 250;
+                cardsToDraw[i]->y = 0;
+            }
+            animationState = 0;
+            gameState = 2;
+            allowDrawCards = true;
+            cardsInPlay = 4;
+        } else if (gameState == 2) {
+            if (animationState < 30) {
+                std::vector<int> newPos = interpolatePosition(player.hand[0]->x, player.hand[0]->y, 180, 300, 10);
+                player.hand[0]->x = newPos[0];
+                player.hand[0]->y = newPos[1];
+                animationState++;
+            }
+            if (animationState >= 30 && animationState < 60) {
+                std::vector<int> newPos = interpolatePosition(player.hand[1]->x, player.hand[1]->y, 260,300, 10);
+                player.hand[1]->x = newPos[0];
+                player.hand[1]->y = newPos[1];
+                animationState++;
+            }
+            if (animationState >= 60 && animationState < 90)
+            {
+                dealer.hand[0]->faceUp = false;
+                std::vector<int> newPos = interpolatePosition(dealer.hand[0]->x, dealer.hand[0]->y, 180, 50, 10);
+                dealer.hand[0]->x = newPos[0];
+                dealer.hand[0]->y = newPos[1];
+                animationState++;
+            }
+            if (animationState >= 90 && animationState < 120)
+            {
+                std::vector<int> newPos = interpolatePosition(dealer.hand[1]->x,dealer.hand[1]->y, 260, 50, 10);
+                dealer.hand[1]->x = newPos[0];
+                dealer.hand[1]->y = newPos[1];
+                animationState++;
+            }
+            if (animationState >= 120)
+            {
+                animationState = 0;
+                gameState = 3;
+            }
+
+        } else if (gameState == 3)
+        {
+            if (!bust && !blackjack)
+            {
+                if (animationState == 0)
+                {
+                    if (IsKeyPressed(KEY_SPACE))
+                    {
+                        gameState = 4;
+                    }
+                    else if (IsKeyPressed(KEY_ENTER))
+                    {
+                        cardsInPlay++;
+                        player.addCard(deck.cards[cardsInPlay - 1]);
+                        cardsToDraw[cardsInPlay - 1] = deck.cards[cardsInPlay - 1];
+                        cardsToDraw[cardsInPlay - 1]->x=250;
+                        cardsToDraw[cardsInPlay - 1]->y=0;
+                        animationState++;
+
+                    }
+                } else if (animationState < 31)
+                {
+                    std::vector<int> newPos = interpolatePosition(player.hand[player.cardsReceived - 1]->x,player.hand[player.cardsReceived - 1]->y, 180 + ((player.cardsReceived - 1) * 80), 300, 10);
+                    player.hand[player.cardsReceived - 1]->x = newPos[0];
+                    player.hand[player.cardsReceived - 1]->y = newPos[1];
+                    animationState++;
+                } else if (animationState == 31)
+                {
+                    if (player.score > 21) {
+                        bust = true;
+                    } else if (player.score == 21)
+                    {
+                        blackjack = true;
+                    }
+                    animationState = 0;
+                }
+            }
+            
         }
+
+        if (allowDrawCards)
+        {
+            for (int i = 0; i < cardsInPlay; i++){
+                cardsToDraw[i]->draw();
+            }
+            DrawText(TextFormat("Your Score: %i", player.score), 170, 400, 20, WHITE);
+            DrawText("Enter - Hit", 170, 420, 20, WHITE);
+            DrawText("Space - Stand", 170, 440, 20, WHITE);
+
+        }
+        
+
         DrawText(TextFormat("Balance: %i", balance), 0, 0, 20, WHITE);
         DrawText(TextFormat("Bet: %i", bet), 0, 20, 20, WHITE);
-        
-        
-
-
-        
-
-        
-        
-
         
         EndDrawing();
     }
