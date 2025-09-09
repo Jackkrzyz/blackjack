@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <algorithm>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -11,42 +12,48 @@ class Card {
         int suit; // 1 = Hearts, 2= diamonds, 3 = clubs, 4 = spades
         int x;
         int y;
+        int baseX;
+        int baseY;
         bool faceUp;
         Card(int v, int s, bool f) {
             value = v;
             suit = s;
             faceUp = f;
+            baseX = 0;
+            baseY = 0;
         }
-        void draw() {
+        void draw(float scale) {
+            int drawX = (int)(baseX * scale);
+            int drawY = (int)(baseY * scale);
             if (faceUp) {
-                DrawRectangle(x, y, 70, 100, WHITE);
-                DrawRectangleLines(x, y, 70, 100, BLACK);
+                DrawRectangle(drawX, drawY, (int)(70 * scale), (int)(100 * scale), WHITE);
+                DrawRectangleLines(drawX, drawY, (int)(70 * scale), (int)(100 * scale), BLACK);
                 if (suit == 1) {
-                    DrawText("Hearts", x + 10, y + 10, 5, RED);
+                    DrawText("Hearts", drawX + (int)(10 * scale), drawY + (int)(10 * scale), (int)(5 * scale), RED);
                 } else if (suit == 2) {
-                    DrawText("Diamonds", x + 10, y + 10, 5, RED);
+                    DrawText("Diamonds", drawX + (int)(10 * scale), drawY + (int)(10 * scale), (int)(5 * scale), RED);
                 } else if (suit == 3) {
-                    DrawText("Clubs", x + 10, y + 10, 5, BLACK);
+                    DrawText("Clubs", drawX + (int)(10 * scale), drawY + (int)(10 * scale), (int)(5 * scale), BLACK);
                 } else if (suit == 4) {
-                    DrawText("Spades", x + 10, y + 10, 5, BLACK);
+                    DrawText("Spades", drawX + (int)(10 * scale), drawY + (int)(10 * scale), (int)(5 * scale), BLACK);
                 }
                 if (value == 13) {
-                    DrawText("K", x + 10, y + 20, 20, BLACK);
+                    DrawText("K", drawX + (int)(10 * scale), drawY + (int)(20 * scale), (int)(20 * scale), BLACK);
                 }
                 else if(value == 12)
                 {
-                    DrawText("Q", x + 10, y + 20, 20, BLACK);
+                    DrawText("Q", drawX + (int)(10 * scale), drawY + (int)(20 * scale), (int)(20 * scale), BLACK);
                 }
                 else if(value == 11)
                 {
-                    DrawText("J", x + 10, y + 20, 20, BLACK);
+                    DrawText("J", drawX + (int)(10 * scale), drawY + (int)(20 * scale), (int)(20 * scale), BLACK);
                 }
                 else {
-                    DrawText(TextFormat("%i", value), x + 10, y + 20, 20, BLACK);
+                    DrawText(TextFormat("%i", value), drawX + (int)(10 * scale), drawY + (int)(20 * scale), (int)(20 * scale), BLACK);
                 }
             } else {
-                DrawRectangle(x, y, 70, 100, DARKGRAY);
-                DrawRectangleLines(x, y, 70, 100, BLACK);
+                DrawRectangle(drawX, drawY, (int)(70 * scale), (int)(100 * scale), DARKGRAY);
+                DrawRectangleLines(drawX, drawY, (int)(70 * scale), (int)(100 * scale), BLACK);
             }
         }
 
@@ -129,6 +136,7 @@ int main () {
     
     const int SCREEN_WIDTH = 500;
     const int SCREEN_HEIGHT = 500;
+    float scale = 1.0f;
 
     int minimumBet = 15;
     int betIncrement = 10;
@@ -146,6 +154,8 @@ int main () {
     
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Blackjack");
+    SetWindowMinSize(500,500);
+
     SetTargetFPS(60);
 
     Player player;
@@ -160,10 +170,20 @@ int main () {
     while (WindowShouldClose() == false && balance > 0 && !IsKeyDown(KEY_DELETE)){
         BeginDrawing();
         ClearBackground(DARKGREEN);
+
+        if (IsKeyPressed(KEY_Q))
+        {
+            SetWindowSize(GetScreenWidth() + 50, GetScreenHeight() + 50);
+        } else if (IsKeyPressed(KEY_A) && GetScreenWidth() >= 550)
+        {
+            SetWindowSize(GetScreenWidth() - 50, GetScreenHeight() - 50);
+        } 
+        scale = (float)GetScreenWidth() / (float)SCREEN_WIDTH;
+
         
 
         if (gameState == 0) {
-            DrawText("Place Bet", 125, 125, 50, WHITE);
+            DrawText("Place Bet", (int)(125 * scale), (int)(125 * scale), (int)(50 * scale), WHITE);
             if (IsKeyPressed(KEY_DOWN)) {
                     bet -= betIncrement;
                     if (bet < minimumBet) {bet = minimumBet; }
@@ -186,8 +206,8 @@ int main () {
             for (int i = 0; i < 4; i++)
             {
                 cardsToDraw[i] = deck.cards[i];
-                cardsToDraw[i]->x = 250;
-                cardsToDraw[i]->y = 0;
+                cardsToDraw[i]->baseX = 250;
+                cardsToDraw[i]->baseY = 0;
             }
             animationState = 0;
             gameState = 2;
@@ -195,30 +215,30 @@ int main () {
             cardsInPlay = 4;
         } else if (gameState == 2) {
             if (animationState < 30) {
-                std::vector<int> newPos = interpolatePosition(player.hand[0]->x, player.hand[0]->y, 180, 300, 10);
-                player.hand[0]->x = newPos[0];
-                player.hand[0]->y = newPos[1];
+                std::vector<int> newPos = interpolatePosition(player.hand[0]->baseX, player.hand[0]->baseY, 180, 300, 10);
+                player.hand[0]->baseX = newPos[0];
+                player.hand[0]->baseY = newPos[1];
                 animationState++;
             }
             if (animationState >= 30 && animationState < 60) {
-                std::vector<int> newPos = interpolatePosition(player.hand[1]->x, player.hand[1]->y, 260,300, 10);
-                player.hand[1]->x = newPos[0];
-                player.hand[1]->y = newPos[1];
+                std::vector<int> newPos = interpolatePosition(player.hand[1]->baseX, player.hand[1]->baseY, 260, 300, 10);
+                player.hand[1]->baseX = newPos[0];
+                player.hand[1]->baseY = newPos[1];
                 animationState++;
             }
             if (animationState >= 60 && animationState < 90)
             {
                 dealer.hand[0]->faceUp = false;
-                std::vector<int> newPos = interpolatePosition(dealer.hand[0]->x, dealer.hand[0]->y, 180, 50, 10);
-                dealer.hand[0]->x = newPos[0];
-                dealer.hand[0]->y = newPos[1];
+                std::vector<int> newPos = interpolatePosition(dealer.hand[0]->baseX, dealer.hand[0]->baseY, 180, 50, 10);
+                dealer.hand[0]->baseX = newPos[0];
+                dealer.hand[0]->baseY = newPos[1];
                 animationState++;
             }
             if (animationState >= 90 && animationState < 120)
             {
-                std::vector<int> newPos = interpolatePosition(dealer.hand[1]->x,dealer.hand[1]->y, 260, 50, 10);
-                dealer.hand[1]->x = newPos[0];
-                dealer.hand[1]->y = newPos[1];
+                std::vector<int> newPos = interpolatePosition(dealer.hand[1]->baseX, dealer.hand[1]->baseY, 260, 50, 10);
+                dealer.hand[1]->baseX = newPos[0];
+                dealer.hand[1]->baseY = newPos[1];
                 animationState++;
             }
             if (animationState >= 120)
@@ -242,16 +262,16 @@ int main () {
                         cardsInPlay++;
                         player.addCard(deck.cards[cardsInPlay - 1]);
                         cardsToDraw[cardsInPlay - 1] = deck.cards[cardsInPlay - 1];
-                        cardsToDraw[cardsInPlay - 1]->x=250;
-                        cardsToDraw[cardsInPlay - 1]->y=0;
+                        cardsToDraw[cardsInPlay - 1]->baseX = 250;
+                        cardsToDraw[cardsInPlay - 1]->baseY = 0;
                         animationState++;
 
                     }
                 } else if (animationState < 31)
                 {
-                    std::vector<int> newPos = interpolatePosition(player.hand[player.cardsReceived - 1]->x,player.hand[player.cardsReceived - 1]->y, 180 + ((player.cardsReceived - 1) * 80), 300, 10);
-                    player.hand[player.cardsReceived - 1]->x = newPos[0];
-                    player.hand[player.cardsReceived - 1]->y = newPos[1];
+                    std::vector<int> newPos = interpolatePosition(player.hand[player.cardsReceived - 1]->baseX, player.hand[player.cardsReceived - 1]->baseY, (180 + ((player.cardsReceived - 1) * 80)), 300, 10);
+                    player.hand[player.cardsReceived - 1]->baseX = newPos[0];
+                    player.hand[player.cardsReceived - 1]->baseY = newPos[1];
                     animationState++;
                 } else if (animationState == 31)
                 {
@@ -270,17 +290,19 @@ int main () {
         if (allowDrawCards)
         {
             for (int i = 0; i < cardsInPlay; i++){
-                cardsToDraw[i]->draw();
+                cardsToDraw[i]->draw(scale);
             }
-            DrawText(TextFormat("Your Score: %i", player.score), 170, 400, 20, WHITE);
-            DrawText("Enter - Hit", 170, 420, 20, WHITE);
-            DrawText("Space - Stand", 170, 440, 20, WHITE);
+            DrawText(TextFormat("Your Score: %i", player.score), (int)(170 * scale), (int)(400 * scale), (int)(20 * scale), WHITE);
+            DrawText("Enter - Hit", (int)(170 * scale), (int)(420 * scale), (int)(20 * scale), WHITE);
+            DrawText("Space - Stand", (int)(170 * scale), (int)(440 * scale), (int)(20 * scale), WHITE);
 
         }
         
 
-        DrawText(TextFormat("Balance: %i", balance), 0, 0, 20, WHITE);
-        DrawText(TextFormat("Bet: %i", bet), 0, 20, 20, WHITE);
+        DrawText(TextFormat("Balance: %i", balance), 0, 0, (int)(20 * scale), WHITE);
+        DrawText(TextFormat("Bet: %i", bet), 0, (int)(20 * scale), (int)(20 * scale), WHITE);
+        DrawText("Q/A to resize", 0, (int)(40 * scale), (int)(20 * scale), WHITE);
+    
         
         EndDrawing();
     }
