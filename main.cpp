@@ -246,6 +246,11 @@ int main () {
                 animationState = 0;
                 gameState = 3;
             }
+            if (player.score == 21)
+            {
+                blackjack = true;
+                gameState = 4;
+            }
 
         } else if (gameState == 3)
         {
@@ -279,9 +284,47 @@ int main () {
                         bust = true;
                     } else if (player.score == 21)
                     {
-                        blackjack = true;
+                        gameState = 4;
                     }
                     animationState = 0;
+                }
+            }
+            else if (bust)
+            {
+                dealer.hand[0]->faceUp = true;
+                DrawText("You Busted!", (int)(125 * scale), (int)(225 * scale), (int)(50 * scale), RED);
+                DrawText("Press Enter to Continue", (int)(125 * scale), (int)(275 * scale), (int)(20 * scale), WHITE);
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    player = Player();
+                    dealer = Player();
+                    deck = Deck();
+                    deck.shuffle();
+                    cardsInPlay = 0;
+                    bust = false;
+                    blackjack = false;
+                    allowDrawCards = false;
+                    gameState = 0;
+                }
+            }
+            else if (blackjack)
+            {
+                dealer.hand[0]->faceUp = true;
+                DrawText("Blackjack!", (int)(175 * scale), (int)(225 * scale), (int)(50 * scale), GOLD);
+                DrawText("Press Enter to Continue", (int)(100 * scale), (int)(275 * scale), (int)(20 * scale), WHITE);
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    // Reset everything
+                    balance += bet * 2.5;
+                    player = Player();
+                    dealer = Player();
+                    deck = Deck();
+                    deck.shuffle();
+                    cardsInPlay = 0;
+                    bust = false;
+                    blackjack = false;
+                    allowDrawCards = false;
+                    gameState = 0;
                 }
             }
             
