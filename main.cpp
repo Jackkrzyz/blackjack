@@ -149,6 +149,7 @@ int main () {
     // 1 = add cards
     // 2 = deal
     // 3 = player's turn
+    
     int animationState = 0;
     bool allowDrawCards = false;
     
@@ -330,13 +331,16 @@ int main () {
             
         } else if (gameState == 4)
         {
+            // Flip Dealer's First Card
             if (animationState >= 0 && animationState < 16)
             {
                 dealer.hand[0]->faceUp = true;
                 animationState++;
             }
+            // Deal next card
             if (animationState == 16)
             {
+                // Check score
                 if (dealer.score < 17)
                 {
                     cardsInPlay++;
@@ -347,6 +351,7 @@ int main () {
                     animationState++;
                 }
                 else {
+                    // Dealers score is >= 17, evaluate end result
                     if (dealer.score > 21)
                     {
                         while (!IsKeyPressed(KEY_ENTER))
