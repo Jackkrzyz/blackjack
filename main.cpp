@@ -83,23 +83,30 @@ public:
     int score = 0;
     int cardsReceived = 0;
     bool bust = false;
-    void addCard(Card* c) {
-        hand[cardsReceived] = c;
-        if (c->value == 1) {
+    void addCard(Card* c, bool addToScore, bool addToHand) {
+        if (addToHand)
+        {
+            hand[cardsReceived] = c;
+            cardsReceived++;
+        }
+        if (addToScore)
+        {
+            if (c->value == 1) {
             if (score + 11 <= 21) {
                 score += 11;
             } else {
                 score += 1;
             }
-        } else if (c->value >= 10) {
-            score += 10;
-        } else {
-            score += c->value;
+            } else if (c->value >= 10) {
+                score += 10;
+            } else {
+                score += c->value;
+            }
+            if (score > 21) {
+                bust = true;
+            }
         }
-        if (score > 21) {
-            bust = true;
-        }
-        cardsReceived++;
+        
     }
 };
 
@@ -142,6 +149,7 @@ int main () {
     int betIncrement = 10;
     int balance = 2000;
     int bet = 15;
+    int resultType = 0; // 0=none, 1=dealer bust, 2=push, 3=dealer wins, 4=player wins
     int gameState = 0;
     bool bust = false;
     bool blackjack = false;
@@ -200,10 +208,10 @@ int main () {
             
 
         } else if (gameState == 1) {
-            player.addCard(deck.cards[0]);
-            dealer.addCard(deck.cards[1]);
-            player.addCard(deck.cards[2]);
-            dealer.addCard(deck.cards[3]);
+            player.addCard(deck.cards[0], true, true);
+            dealer.addCard(deck.cards[1], false, true);
+            player.addCard(deck.cards[2], true, true);
+            dealer.addCard(deck.cards[3], true, true);
             for (int i = 0; i < 4; i++)
             {
                 cardsToDraw[i] = deck.cards[i];
@@ -266,7 +274,7 @@ int main () {
                     else if (IsKeyPressed(KEY_ENTER))
                     {
                         cardsInPlay++;
-                        player.addCard(deck.cards[cardsInPlay - 1]);
+                        player.addCard(deck.cards[cardsInPlay - 1], true, true);
                         cardsToDraw[cardsInPlay - 1] = deck.cards[cardsInPlay - 1];
                         cardsToDraw[cardsInPlay - 1]->baseX = 250;
                         cardsToDraw[cardsInPlay - 1]->baseY = 0;
@@ -331,8 +339,15 @@ int main () {
             
         } else if (gameState == 4)
         {
+           
+            // Add Dealer's first card to score
+            if (animationState == 0)
+            {
+                dealer.addCard(deck.cards[1], false, true);
+                animationState++;
+            }
             // Flip Dealer's First Card
-            if (animationState >= 0 && animationState < 16)
+            if (animationState >= 1 && animationState < 16)
             {
                 dealer.hand[0]->faceUp = true;
                 animationState++;
@@ -341,10 +356,10 @@ int main () {
             if (animationState == 16)
             {
                 // Check score
-                if (dealer.score < 17)
+                if (dealer.score < 17) // if less than 17, draw card
                 {
                     cardsInPlay++;
-                    dealer.addCard(deck.cards[cardsInPlay - 1]);
+                    dealer.addCard(deck.cards[cardsInPlay - 1], true, true);
                     cardsToDraw[cardsInPlay - 1] = deck.cards[cardsInPlay - 1];
                     cardsToDraw[cardsInPlay - 1]->baseX = 250;
                     cardsToDraw[cardsInPlay - 1]->baseY = 0;
@@ -354,78 +369,24 @@ int main () {
                     // Dealers score is >= 17, evaluate end result
                     if (dealer.score > 21)
                     {
-                        while (!IsKeyPressed(KEY_ENTER))
-                        {
-                            DrawText("You Win", 150, 250, 25, GREEN);
-                            DrawText("Enter - Play Again", 150, 275, 25, WHITE);
-                        }
-                        
-
+                        resultType = 1;  // Dealer bust
                         balance += bet * 2;
-                        player = Player();
-                        dealer = Player();
-                        deck = Deck();
-                        deck.shuffle();
-                        cardsInPlay = 0;
-                        bust = false;
-                        blackjack = false;
-                        allowDrawCards = false;
-                        gameState = 0;
                     }
                     else if (dealer.score == player.score)
                     {
-                        while (!IsKeyPressed(KEY_ENTER))
-                        {
-                            DrawText("Push", 150, 250, 25, WHITE);
-                            DrawText("Enter - Play Again", 150, 275, 25, WHITE);
-                        }
+                        resultType = 2;  // Push
                         balance += bet;
-                        player = Player();
-                        dealer = Player();
-                        deck = Deck();
-                        deck.shuffle();
-                        cardsInPlay = 0;
-                        bust = false;
-                        blackjack = false;
-                        allowDrawCards = false;
-                        gameState = 0;
                     }
                     else if (dealer.score > player.score)
                     {
-                        while (!IsKeyPressed(KEY_ENTER))
-                        {
-                            DrawText("You lost", 150, 250, 25, RED);
-                            DrawText("Enter - Play Again", 150, 275, 25, WHITE);
-                        }
-                        player = Player();
-                        dealer = Player();
-                        deck = Deck();
-                        deck.shuffle();
-                        cardsInPlay = 0;
-                        bust = false;
-                        blackjack = false;
-                        allowDrawCards = false;
-                        gameState = 0;
+                        resultType = 3;  // Dealer wins
                     }
-                    else if (player.score > dealer.score)
+                    else
                     {
-                        while (!IsKeyPressed(KEY_ENTER))
-                        {
-                            DrawText("You Win", 150, 250, 25, GREEN);
-                            DrawText("Enter - Play Again", 150, 275, 25, WHITE);
-                        }
-                        
+                        resultType = 4;  // Player wins
                         balance += bet * 2;
-                        player = Player();
-                        dealer = Player();
-                        deck = Deck();
-                        deck.shuffle();
-                        cardsInPlay = 0;
-                        bust = false;
-                        blackjack = false;
-                        allowDrawCards = false;
-                        gameState = 0;
                     }
+                    gameState = 5;  // Go to results screen
                 }
             }
             if (animationState > 16 && animationState < 31){
@@ -436,13 +397,42 @@ int main () {
             }
             if (animationState == 31) { animationState = 16; }
             
+        } else if (gameState == 5)
+        {
+            // Show result message
+            if (resultType == 1) {
+                DrawText("You Win (Dealer Bust)", (int)(100 * scale), (int)(250 * scale), (int)(25 * scale), GREEN);
+            } else if (resultType == 2) {
+                DrawText("Push", (int)(150 * scale), (int)(250 * scale), (int)(25 * scale), WHITE);
+            } else if (resultType == 3) {
+                DrawText("You Lost", (int)(150 * scale), (int)(250 * scale), (int)(25 * scale), RED);
+            } else if (resultType == 4) {
+                DrawText("You Win", (int)(150 * scale), (int)(250 * scale), (int)(25 * scale), GREEN);
+            }
+            DrawText("Enter - Play Again", (int)(150 * scale), (int)(275 * scale), (int)(25 * scale), WHITE);
+            
+            if (IsKeyPressed(KEY_ENTER)) {
+                player = Player();
+                dealer = Player();
+                deck = Deck();
+                deck.shuffle();
+                cardsInPlay = 0;
+                bust = false;
+                blackjack = false;
+                allowDrawCards = false;
+                resultType = 0;
+                animationState = 0;
+                gameState = 0;
+            }
         }
+        
 
         if (allowDrawCards)
         {
             for (int i = 0; i < cardsInPlay; i++){
                 cardsToDraw[i]->draw(scale);
             }
+            DrawText(TextFormat("Dealer Score: %i", dealer.score), (int)(170 * scale), (int)(200 * scale), (int)(20 * scale), WHITE);
             DrawText(TextFormat("Your Score: %i", player.score), (int)(170 * scale), (int)(400 * scale), (int)(20 * scale), WHITE);
             if (gameState ==3)
             {
